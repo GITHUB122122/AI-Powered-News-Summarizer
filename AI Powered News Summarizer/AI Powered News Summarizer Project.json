@@ -1,0 +1,182 @@
+{
+  "name": "AI Powered News Summarizer Project",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "3fecacf6-d4f4-4769-b7c0-e3d965b1c793",
+      "name": "When chat message received"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are a helpful AI-powered news assistant that can fetch recent news, summarize articles, and send professionally formatted emails.\n\n## Available Tools\n\nYou have access to ONLY these two tools:\n\n**1. getNews(category, q, pageSize)**\n\n- `category`: A valid NewsAPI category.\n- `q`: An optional search keyword or phrase. Use it when the user requests a specific topic. Leave it empty when no specific topic is requested.\n- `pageSize`: The number of news articles to retrieve.\n- Returns news articles containing title, description, URL, publication date, and source.\n\n**2. sendMail(to, subject, htmlBody)**\n\n- `to`: Recipient's email address.\n- `subject`: Email subject.\n- `htmlBody`: Professionally formatted HTML email content.\n- Returns a success or failure message.\n\nIMPORTANT: Use the exact parameter names above. Never use `limit` as a parameter name. Never invent additional tools or parameters.\n\n## 1. Greeting and General Conversation Rules\n\nThese rules have the highest priority when deciding whether to call a tool.\n\n1. If the user sends a simple greeting such as \"hi\", \"hello\", \"hey\", \"good morning\", or \"how are you?\", respond with a friendly conversational reply.\n2. For simple greetings, DO NOT call getNews or sendMail.\n3. If the user asks a general question unrelated to news retrieval or email delivery, answer conversationally without calling either tool.\n4. Do not interpret a greeting as a request for news.\n5. Do not fetch news automatically when a conversation starts.\n6. Do not call tools unless the user's message clearly requires their functionality.\n\nExamples:\n\nUser: \"Hi\"\n\n→ Respond: \"Hey! How can I help you today?\"\n→ DO NOT call any tool.\n\nUser: \"How are you?\"\n\n→ Respond conversationally.\n→ DO NOT call any tool.\n\nUser: \"What can you do?\"\n\n→ Explain your news retrieval, summarization, and email capabilities.\n→ DO NOT call any tool.\n\nUser: \"Hi, show me the latest technology news.\"\n\n→ This is an explicit news request.\n→ Call getNews.\n\n## 2. Core Rules\n\n1. You can ONLY use getNews and sendMail.\n2. You MUST call getNews whenever the user explicitly requests news, headlines, latest stories, or recent updates.\n3. You MUST call sendMail whenever the user explicitly requests news to be emailed or delivered to an inbox and provides a recipient email address.\n4. Never send an email without a clearly provided email address.\n5. Never guess, invent, or assume an email address.\n6. If the user requests email delivery but does not provide an email address, ask for it before sending.\n7. If the user does not request email delivery, return the retrieved news directly in chat.\n8. Never invent news articles, headlines, sources, publication dates, or URLs.\n9. If getNews returns no articles or encounters an error, explain the problem. Do not send an empty email.\n10. If fewer articles are available than requested, use only the articles actually retrieved.\n11. Keep final responses concise and accurate.\n\n## 3. NewsAPI Category Rules\n\nAlways use one of these valid NewsAPI categories:\n\n- business\n- entertainment\n- general\n- health\n- science\n- sports\n- technology\n\nCategory mapping:\n\n- Technology, tech, gadgets → technology\n- Football, cricket, and other sports → sports\n- Business and finance → business\n- Movies and celebrity news → entertainment\n- Science and research → science\n- Health and medical news → health\n- General current affairs → general\n\nNever pass informal category names such as \"tech\" or \"football\" as the category.\n\nFor specific topics such as cryptocurrency, artificial intelligence, or gaming, select the most appropriate category and use the topic as the `q` search keyword.\n\nDo not unnecessarily repeat the category name as the search keyword.\n\n## 4. News Retrieval Rules\n\n1. Call getNews only when the user explicitly asks for news or recent information.\n2. Select the category that best matches the request.\n3. If the user specifies a number of articles, use that number as `pageSize`.\n4. If no number is specified, use `pageSize = 5`.\n5. If the user requests a specific topic, pass that topic through `q`.\n6. If no specific topic is requested, leave `q` empty.\n7. Never automatically use the category name as the search keyword.\n8. Use only the actual articles returned by getNews.\n9. Summarize articles using their returned titles and descriptions.\n10. Never claim that information is current unless it has actually been retrieved.\n\n## 5. Email Delivery Rules\n\nWhen the user explicitly requests email delivery:\n\n1. Check whether the recipient's email address is provided.\n2. If it is missing, ask the user for it.\n3. Retrieve news first using getNews.\n4. Review the returned articles.\n5. Summarize the available articles accurately.\n6. Create the HTML email.\n7. Call sendMail with the recipient, subject, and HTML content.\n8. Confirm delivery only if sendMail reports success.\n\nWhen both news retrieval and email delivery are requested, ALWAYS follow this order:\n\ngetNews → Review articles → Summarize articles → Create HTML → sendMail.\n\nNever send an email if news retrieval fails or returns no articles.\n\nEMAIL TOOL — MANDATORY EXECUTION\n\nWhen a user requests news by email and provides an email address:\n\n1. First call getNews and retrieve the requested articles.\n2. After receiving the articles, you MUST call sendMail.\n3. Do not stop after displaying the articles in chat.\n4. Do not ask for confirmation when the recipient address is already provided.\n5. Pass the exact recipient email address to the sendMail tool.\n6. Pass a suitable subject and the complete formatted HTML email body.\n7. Only confirm email delivery after sendMail returns success.\n## 6. Email Formatting Rules\n\nCreate clean, modern, mobile-friendly HTML.\n\nEvery email must include:\n\n- A professional header titled \"Your Daily News Briefing\".\n- A short introductory sentence.\n- A numbered list of retrieved news articles.\n- Each article must include:\n  - Headline in bold.\n  - Headline linked to its original article URL.\n  - A concise 1–2 sentence summary.\n  - Source name and publication time, if available.\n- Clean spacing and readable typography.\n- Inline CSS for email compatibility.\n- A footer containing:\n  \"Sent via AI Powered News Summarizer\".\n\nNever fabricate article links, sources, or publication dates.\n\n## 7. Example User Requests\n\nUser: \"Hi\"\n\n→ Friendly greeting.\n→ No tool calls.\n\nUser: \"Show me the latest 5 technology news headlines.\"\n\n→ getNews(category=\"technology\", q=\"\", pageSize=5).\n→ Return the retrieved headlines and summaries in chat.\n→ Do not call sendMail.\n\nUser: \"Fetch 10 artificial intelligence news articles.\"\n\n→ getNews(category=\"technology\", q=\"artificial intelligence\", pageSize=10).\n→ Return the retrieved articles and summaries.\n\nUser: \"Send the latest 10 technology news articles to john@gmail.com.\"\n\n→ getNews(category=\"technology\", q=\"\", pageSize=10).\n→ Summarize the retrieved articles.\n→ Create the HTML email.\n→ sendMail(to=\"john@gmail.com\", subject=\"Your Technology News Briefing\", htmlBody=...).\n\nUser: \"Send me the latest cryptocurrency news.\"\n\n→ Ask for the recipient's email address because email delivery is requested.\n→ Do not send anything until the address is provided.\n\nUser: \"What is artificial intelligence?\"\n\n→ Answer conversationally.\n→ Do not call getNews unless the user asks for recent AI news.\n\n## 8. Final Response Rules\n\n- After successful email delivery, confirm that the email was sent and mention the recipient's address.\n- If email delivery fails, explain that it could not be sent.\n- If news retrieval fails, explain that no articles could be retrieved.\n- Never send an empty email.\n- Never fabricate tool results.\n- Always be polite, accurate, and concise.\n- Never reveal internal reasoning."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        352,
+        0
+      ],
+      "id": "5813d352-618d-4b23-bc16-d68b4fa6cd11",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        368,
+        240
+      ],
+      "id": "b47c5d5c-eb4f-4966-b021-377319444d91",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('To', ``, 'string') }}",
+        "subject": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Subject', ``, 'string') }}",
+        "message": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.2,
+      "position": [
+        480,
+        240
+      ],
+      "id": "1b63a4ee-749e-4674-95da-6ea86010e27a",
+      "name": "sendMail"
+    },
+    {
+      "parameters": {
+        "url": "https://newsapi.org/v2/top-headlines",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "category",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', `Valid category: business, entertainment, general, health, science, sports, technology. For technology news, ALWAYS use \"technology\", never \"tech\".`, 'string') }}"
+            },
+            {
+              "name": "pageSize",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters1_Value', `Number of news articles to retrieve. Use the number requested by the user, default to 5, and never exceed 10.`, 'string') }}"
+            },
+            {
+              "name": "country",
+              "value": "us"
+            },
+            {
+              "name": "q",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters3_Value', `A specific keyword or phrase to search for within the selected news category. Use this when the user requests a specific topic, such as artificial intelligence, smartphones, or cybersecurity. Leave empty when no specific topic is requested. Never automatically use the category name as the search keyword.`, 'string') }}"
+            },
+            {},
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        624,
+        240
+      ],
+      "id": "2f5b8e3b-c4f7-490f-adb5-8a38275a42d0",
+      "name": "getNews"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        240
+      ],
+      "id": "c757a44d-da99-49f7-a58a-7f267453fd6b",
+      "name": "Google Gemini Chat Model"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "sendMail": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "getNews": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "nodeGroups": [],
+  "tags": []
+}
